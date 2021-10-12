@@ -14,10 +14,12 @@ class FgcmDesTransmission(object):
         File with atmosphere throughput data.
     """
     def __init__(self, ccd_file, atm_file):
-        self._ccd_data = self._read_ccd_file(ccd_file)
-        self._atm_data = self._read_atm_file(atm_file)
+        self._read_ccd_file(ccd_file)
+        self._read_atm_file(atm_file)
 
+        # default are the atm wavelengths.
         self._wavelengths = None
+        self.set_wavelengths(self._atm_wavelengths)
         self._std_ifunc = None
 
     def set_wavelengths(self, wavelengths):
@@ -49,7 +51,7 @@ class FgcmDesTransmission(object):
             for j in range(self.nccd):
                 ifunc = interpolate.interp1d(self._ccd_data[band]['lambda'],
                                              self._ccd_data[band]['throughput_ccd'][:, j])
-                self._band_ccd_interp[band][:, j] = np.clip(ifunc(self._wavelengths, j))
+                self._band_ccd_interp[band][:, j] = np.clip(ifunc(self._wavelengths), 0.0, 1e100)
 
     def get_wavelengths(self):
         """Get the wavelengths in the cache.
@@ -98,7 +100,7 @@ class FgcmDesTransmission(object):
             raise ValueError(f"band {band} not in throughput table.")
 
         ifunc = interpolate.interp1d(self._atm_wavelengths,
-                                     self._atm_data['throughput'][u, :])
+                                     self._atm_data['throughput'][u[0], :])
         atm = np.clip(ifunc(self._wavelengths), 0.0, 1e100)
 
         return atm*self._band_ccd_interp[band][:, ccd_index]
@@ -147,6 +149,9 @@ class FgcmDesTransmission(object):
         self.nccd = None
         with fitsio.FITS(ccd_file) as fits:
             for hdu in fits:
+                if 'band' not in hdu.get_extname():
+                    continue
+
                 parts = hdu.get_extname().split('_')
 
                 self._ccd_data[parts[0]] = hdu.read()
@@ -168,4 +173,4 @@ class FgcmDesTransmission(object):
         # The 1st row has the standard atmosphere
         self._atm_std = atm_data['throughput'][1, :]
         # And the rest of the rows are per-exposure
-        self._atm_data = atm_data[2:, :]
+        self._atm_data = atm_data[2:]
