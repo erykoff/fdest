@@ -39,6 +39,20 @@ class FdestTestCase(unittest.TestCase):
         testing.assert_array_almost_equal(trans.get_wavelengths(),
                                           new_wavelengths)
 
+        # Update to an identical set.
+        newer_wavelengths = np.arange(3000., 11000., 100.0)
+        trans.set_wavelengths(newer_wavelengths)
+
+        testing.assert_array_almost_equal(trans.get_wavelengths(),
+                                          newer_wavelengths)
+
+        # Update to set with same length, different values
+        newest_wavelengths = newer_wavelengths + 1.0
+        trans.set_wavelengths(newest_wavelengths)
+
+        testing.assert_array_almost_equal(trans.get_wavelengths(),
+                                          newest_wavelengths)
+
     def test_get_std_transmission(self):
         """Test getting the standard transmission."""
         trans = fdest.FgcmDesTransmission(self.ccdfile, self.atmfile)

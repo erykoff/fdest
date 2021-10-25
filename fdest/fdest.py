@@ -34,7 +34,7 @@ class FgcmDesTransmission(object):
         """
         if self._wavelengths is not None:
             if len(wavelengths) == len(self._wavelengths):
-                if np.allclose(wavelengths == self._wavelengths):
+                if np.allclose(wavelengths, self._wavelengths):
                     # This is a match, we don't need to do anything
                     return
 
